@@ -1,10 +1,23 @@
 #include <iostream>
+#include <opencv2/opencv.hpp>
 
 using namespace std;
+using namespace cv;
 
-int main()
+void process(char* imsname)
 {
-    cout << "Hello World!" << endl;
+
+}
+
+#define param 1
+int main(int argc, char** argv)
+{
+    if(argc != param + 1)
+        cout<<"Usage: imsname"<<endl;
+    else
+    {
+        process(argv[1]);
+    }
     return 0;
 }
 
