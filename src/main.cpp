@@ -6,7 +6,7 @@ using namespace cv;
 
 void focus(Mat ims, Mat imf)
 {
-	// Remove parts of the image not from the football field
+    // Remove parts of the image not from the football field
     Vec3b V(0,0,0);
     for(int i=0; i<imf.rows; ++i)
     {
@@ -24,33 +24,57 @@ void focus(Mat ims, Mat imf)
 
 void process(char* imsname, char* imfield)
 {
-	//Time to process
-	double time = (double)getTickCount();
+    //Time to process
+    double time = (double)getTickCount();
 
-	//Load images
+    //Load images
     Mat ims = imread(imsname);
+    Mat new_ims = ims.clone();
     Mat imf = imread(imfield, CV_LOAD_IMAGE_GRAYSCALE);
     Mat imsG;
 
-	//Convert main image to a gray scale
+    // Brightness & contrast
+    for( int y = 0; y < ims.rows; y++ )
+        for( int x = 0; x < ims.cols; x++ )
+            for( int c = 0; c < 3; c++ )
+                new_ims.at<Vec3b>(y,x)[c] = saturate_cast<uchar>( 2 * ims.at<Vec3b>(y,x)[c] );
+
+    namedWindow("Source");
+    imshow( "Source", new_ims );
+    waitKey(0);
+
+
+    //Convert main image to a gray scale
     cvtColor(ims, imsG, CV_BGR2GRAY);
 
     Mat hsv[3];
     {
         Mat hsv2;
-        cvtColor(ims, hsv2, CV_BGR2HSV);
+        cvtColor(new_ims, hsv2, CV_BGR2HSV);
         split(hsv2, hsv);
     }
 
 
     //////////////////////////////////////////////////////////////////////////////////////
+/*
     equalizeHist(hsv[0], hsv[0]);
-    hsv[0] = Mat::ones(ims.rows, ims.cols, CV_8UC1) * 255 - hsv[0];
-
+    //hsv[0] = Mat::ones(ims.rows, ims.cols, CV_8UC1) * 255 - hsv[0];
+    // Extract yellow-ish colors
+    for( int y = 0; y < hsv[0].rows; y++ )
+        for( int x = 0; x < hsv[0].cols; x++ )
+                hsv[0].at<uchar>(y,x) =  (abs((int)hsv[0].at<uchar>(y,x) - 66) < 20) * 255;
+*/
 
     namedWindow("Source");
-    imshow( "Source", hsv[0] );
+    imshow( "Source", hsv[2]);
     waitKey(0);
+
+    threshold(hsv[2], hsv[2], 225, 255, THRESH_BINARY);
+
+    namedWindow("Source");
+    imshow( "Source", hsv[2]);
+    waitKey(0);
+
     //////////////////////////////////////////////////////////////////////////////////////
     //equalizeHist(imsG,imsG);
     bilateralFilter(imsG.clone(), imsG, -1, 30, 10);
@@ -59,7 +83,7 @@ void process(char* imsname, char* imfield)
     imshow( "Source", imsG );
     waitKey(0);
 
-    adaptiveThreshold(imsG, imsG, 200, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 3, 0);
+    adaptiveThreshold(imsG, imsG, 255, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 3, 0);
 
     namedWindow("Source");
     imshow( "Source", imsG );
@@ -70,7 +94,7 @@ void process(char* imsname, char* imfield)
     //threshold(imsG,imsG,125,255,CV_THRESH_BINARY);
     Mat kern = getStructuringElement(MORPH_CROSS, Size(8,8));
     morphologyEx(imsG,imsG,CV_MOP_CLOSE, kern);
-    morphologyEx(imsG,imsG,CV_MOP_ERODE, getStructuringElement(MORPH_CROSS, Size(3,3)));
+    //morphologyEx(imsG,imsG,CV_MOP_ERODE, getStructuringElement(MORPH_CROSS, Size(3,3)));
 
     focus(imsG, imf);
     namedWindow("Source");
