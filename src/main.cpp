@@ -6,6 +6,7 @@ using namespace cv;
 
 void focus(Mat ims, Mat imf)
 {
+	// Remove parts of the image not from the football field
     Vec3b V(0,0,0);
     for(int i=0; i<imf.rows; ++i)
     {
@@ -23,9 +24,15 @@ void focus(Mat ims, Mat imf)
 
 void process(char* imsname, char* imfield)
 {
+	//Time to process
+	double time = (double)getTickCount();
+
+	//Load images
     Mat ims = imread(imsname);
     Mat imf = imread(imfield, CV_LOAD_IMAGE_GRAYSCALE);
     Mat imsG;
+
+	//Convert main image to a gray scale
     cvtColor(ims, imsG, CV_BGR2GRAY);
 
     Mat hsv[3];
@@ -54,7 +61,6 @@ void process(char* imsname, char* imfield)
 
     adaptiveThreshold(imsG, imsG, 200, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 3, 0);
 
-    //focus(imsG, imf);
     namedWindow("Source");
     imshow( "Source", imsG );
     waitKey(0);
@@ -66,13 +72,15 @@ void process(char* imsname, char* imfield)
     morphologyEx(imsG,imsG,CV_MOP_CLOSE, kern);
     morphologyEx(imsG,imsG,CV_MOP_ERODE, getStructuringElement(MORPH_CROSS, Size(3,3)));
 
-
+    focus(imsG, imf);
     namedWindow("Source");
     imshow( "Source", imsG );
     imshow("ims",ims);
+    // Process and display execution time
+    time = ((double)getTickCount() - time) / getTickFrequency();
+    cout << "Execution time:" << time << endl;
     waitKey(0);
 
-    waitKey(0);
 }
 
 #define param 2
