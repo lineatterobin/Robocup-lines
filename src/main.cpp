@@ -12,7 +12,10 @@ void focus(Mat ims, Mat imf)
         for(int j=0; j<imf.cols; ++j)
         {
             if(imf.at<uchar>(i,j) == 0)
-                ims.at<Vec3b>(i,j) = V;
+                if(ims.type() == CV_8UC3)
+                    ims.at<Vec3b>(i,j) = V;
+                else
+                    ims.at<uchar>(i,j) = 0;
         }
     }
 }
@@ -25,25 +28,49 @@ void process(char* imsname, char* imfield)
     Mat imsG;
     cvtColor(ims, imsG, CV_BGR2GRAY);
 
-    Mat dst, color_dst;
-    Mat result(ims.rows, ims.cols, CV_8UC3);
-    Canny( imsG, dst, 30, 200, 3 );
-    cvtColor( dst, color_dst, CV_GRAY2BGR );
-    vector<Vec4i> lines;
-    HoughLinesP( dst, lines, 1, 1*CV_PI/180, 20, 30, 10 );
-    ims.copyTo(result);
-    for( size_t i = 0; i < lines.size(); i++ )
+    Mat hsv[3];
     {
-        line( result, Point(lines[i][0], lines[i][1]),
-                Point(lines[i][2], lines[i][3]), Scalar(0,0,255), 3, 8 );
+        Mat hsv2;
+        cvtColor(ims, hsv2, CV_BGR2HSV);
+        split(hsv2, hsv);
     }
 
-    focus(result, imf);
+
+    //////////////////////////////////////////////////////////////////////////////////////
+    equalizeHist(hsv[0], hsv[0]);
+    hsv[0] = Mat::ones(ims.rows, ims.cols, CV_8UC1) * 255 - hsv[0];
+
+
+    namedWindow("Source");
+    imshow( "Source", hsv[0] );
+    waitKey(0);
+    //////////////////////////////////////////////////////////////////////////////////////
+    //equalizeHist(imsG,imsG);
+    bilateralFilter(imsG.clone(), imsG, -1, 30, 10);
+
     namedWindow("Source");
     imshow( "Source", imsG );
+    waitKey(0);
 
-    namedWindow( "Detected Lines");
-    imshow( "Detected Lines", result );
+    adaptiveThreshold(imsG, imsG, 200, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 3, 0);
+
+    //focus(imsG, imf);
+    namedWindow("Source");
+    imshow( "Source", imsG );
+    waitKey(0);
+
+    bilateralFilter(imsG.clone(), imsG, -1, 80, 10);
+    adaptiveThreshold(imsG, imsG, 255, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 3, 0);
+    //threshold(imsG,imsG,125,255,CV_THRESH_BINARY);
+    Mat kern = getStructuringElement(MORPH_CROSS, Size(8,8));
+    morphologyEx(imsG,imsG,CV_MOP_CLOSE, kern);
+    morphologyEx(imsG,imsG,CV_MOP_ERODE, getStructuringElement(MORPH_CROSS, Size(3,3)));
+
+
+    namedWindow("Source");
+    imshow( "Source", imsG );
+    imshow("ims",ims);
+    waitKey(0);
 
     waitKey(0);
 }
