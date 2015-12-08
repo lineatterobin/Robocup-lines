@@ -21,6 +21,16 @@ void focus(Mat ims, Mat imf)
     }
 }
 
+bool isWhite(Mat img)
+{
+    for (int i = 0; i < img.rows ; i++) {
+        for (int j = 0; j < img.cols ; j++) {
+            if(img.at<uchar>(i,j) == 0)
+                return false;
+        }
+    }
+    return true;
+}
 
 void process(char* imsname, char* imfield)
 {
@@ -29,6 +39,7 @@ void process(char* imsname, char* imfield)
 
     //Load images
     Mat ims = imread(imsname);
+
     Mat imf = imread(imfield, CV_LOAD_IMAGE_GRAYSCALE);
 
     Mat new_ims = ims.clone();
@@ -105,9 +116,11 @@ void process(char* imsname, char* imfield)
 
     bitwise_or(hsv[2], imsG, imsG);
     //focus(imsG, imf);
+    if(isWhite(imf))
+        morphologyEx(imsG,imsG,CV_MOP_OPEN, getStructuringElement(MORPH_RECT, Size(3,3)));
     imshow( "Result1", imsG );
     ////////////HOUGHLINES
-
+/*
     Mat dst, cdst;
     Canny(imsG, dst, 50, 200, 3);
     cvtColor(dst, cdst, CV_GRAY2BGR);
@@ -126,7 +139,7 @@ void process(char* imsname, char* imfield)
         pt2.x = cvRound(x0 - 1000*(-b));
         pt2.y = cvRound(y0 - 1000*(a));
         line( ims, pt1, pt2, Scalar(0,0,255), 3, CV_AA);
-    }*/
+    }
     vector<Vec4i> lines;
         HoughLinesP( dst, lines, 1, CV_PI/180, 80, 30, 10 );
         for( size_t i = 0; i < lines.size(); i++ )
@@ -135,10 +148,71 @@ void process(char* imsname, char* imfield)
                 Point(lines[i][2], lines[i][3]), Scalar(0,0,255), 3, 8 );
         }
 
-
+    */
     //////////////
 
+    for (int i = 0; i < imsG.rows ; i++) {
+        for (int j = 0; j < imsG.cols ; j++) {
+            if(imsG.at<uchar>(i,j) == 255) {
+                ims.at<Vec3b>(i,j)[0] = 0;
+                ims.at<Vec3b>(i,j)[1] = 0;
+                ims.at<Vec3b>(i,j)[2] = 255;
+            }
+        }
+    }
+
     imshow( "Result", ims );
+
+    /*//////////////
+
+    Mat imsRes = Mat::zeros(imsG.rows, imsG.cols, CV_8UC1);
+    int countW = 0;
+    int countB = 0;
+    for (int i = 0; i < imsG.rows ; i++) {
+        for (int j = 0; j < imsG.cols ; j++) {
+            if(imsG.at<uchar>(i,j) == 255) {
+                countW += 1;
+            }else if(imsG.at<uchar>(i,j) == 0 && countW > 0){
+                if (countB > 0 && countW/2 > 0){
+                    imsRes.at<uchar>(i,j-2-countW/2) = 255;
+                    countB = 0;
+                    countW = 0;
+                }
+                else if(countB > 0 && countW/2 ==0){
+                    countB = 0;
+                    countW = 0;
+                }
+                else{
+                    countB++;
+                }
+            }
+        }
+    }
+    countW = 0;
+    countB = 0;
+    for (int i = 0; i < imsG.cols ; i++) {
+        for (int j = 0; j < imsG.rows ; j++) {
+            if(imsG.at<uchar>(j,i) == 255) {
+                countW += 1;
+            }else if(imsG.at<uchar>(j,i) == 0 && countW > 0){
+                if (countB > 0 && countW/2 > 0){
+                    imsRes.at<uchar>(j-2-countW/2,i) = 255;
+                    countB = 0;
+                    countW = 0;
+                }
+                else if(countB > 0 && countW/2 ==0){
+                    countB = 0;
+                    countW = 0;
+                }
+                else{
+                    countB++;
+                }
+            }
+        }
+    }
+    imshow( "imsResult", imsRes );
+
+    //////////////*/
 
     // Process and display execution time
     time = ((double)getTickCount() - time) / getTickFrequency();
