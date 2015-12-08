@@ -12,16 +12,18 @@ void focus(Mat ims, Mat imf, Mat imb)
     {
         for(int j=0; j<imf.cols; ++j)
         {
-            if(imf.at<uchar>(i,j) == 0)
+            if(imf.at<uchar>(i,j) == 0){
                 if(ims.type() == CV_8UC3)
                     ims.at<Vec3b>(i,j) = V;
                 else
                     ims.at<uchar>(i,j) = 0;
-            if(imb.at<uchar>(i,j) == 255)
+            }
+            if(imb.at<uchar>(i,j) == 255){
                 if(ims.type() == CV_8UC3)
                     ims.at<Vec3b>(i,j) = V;
                 else
                     ims.at<uchar>(i,j) = 0;
+            }
         }
     }
 }
@@ -44,8 +46,8 @@ void process(char* imsname, char* imfield, char* imball, char* imtheo)
 
     //Load images
     Mat ims = imread(imsname);
-    Mat imb = imread(imball);
-    Mat imtheo = imread(imtheo);
+    Mat imb = imread(imball, CV_LOAD_IMAGE_GRAYSCALE);
+    Mat imt = imread(imtheo, CV_LOAD_IMAGE_GRAYSCALE);
 
     Mat imf = imread(imfield, CV_LOAD_IMAGE_GRAYSCALE);
 
@@ -77,7 +79,7 @@ void process(char* imsname, char* imfield, char* imball, char* imtheo)
     // Extract yellow-ish colors
     for( int y = 0; y < hsv[0].rows; y++ )
         for( int x = 0; x < hsv[0].cols; x++ )
-                hsv[0].at<uchar>(y,x) =  (abs((int)hsv[0].at<uchar>(y,x) - 66) < 20) * 255;
+            hsv[0].at<uchar>(y,x) =  (abs((int)hsv[0].at<uchar>(y,x) - 66) < 20) * 255;
 
     threshold(hsv[2], hsv[2], 225, 255, THRESH_BINARY);
 
@@ -96,7 +98,7 @@ void process(char* imsname, char* imfield, char* imball, char* imtheo)
     imshow( "2", imsG );
 
     bitwise_or(hsv[2], imsG, imsG);
-    //focus(imsG, imf, imb);
+    focus(imsG, imf, imb);
     if(isWhite(imf))
         morphologyEx(imsG,imsG,CV_MOP_OPEN, getStructuringElement(MORPH_RECT, Size(3,3)));
     imshow( "Result1", imsG );
@@ -112,6 +114,16 @@ void process(char* imsname, char* imfield, char* imball, char* imtheo)
     }
 
     imshow( "Result", ims );
+    int false_positive = 0;
+    int false_negative = 0;
+    for (int i = 0; i < imsG.rows ; i ++) {
+        for (int j = 0; j < imsG.cols ; j++) {
+            if(imsG.at<uchar>(i,j) == 255 && imt.at<uchar>(i,j) != 255)
+                false_positive++;
+            else if (imsG.at<uchar>(i,j) != 255 && imt.at<uchar>(i,j) == 255)
+                false_negative++;
+        }
+    }
 
     // Process and display execution time
     time = ((double)getTickCount() - time) / getTickFrequency();
