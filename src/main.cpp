@@ -112,6 +112,29 @@ void process(char* imsfile, char* imfield, char* imball, char* imtheo)
         vector<Vec2f> lines;
         HoughLines(imsG, lines, 1, CV_PI/180, 200, 0, 0 );
 
+        Mat Mlines = Mat::zeros(2000, 361, CV_8UC1);
+
+        for( size_t i = 0; i < lines.size(); i++ )
+        {
+            float rho = lines[i][0], theta = lines[i][1];
+            Mlines.at<uchar>(1000 + rho,theta) = 255;
+        }
+
+        morphologyEx(Mlines, Mlines, CV_MOP_DILATE, getStructuringElement(MORPH_ELLIPSE, Size(15,15)));
+
+        vector<vector<Vec2f> > contours;
+        findContours(Mlines, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+
+        lines.clear();
+        Vec2f average(0,0);
+        for(size_t i = 0; i < contours.size(); ++i){
+            for(size_t j = 0; j < contours[i].size(); ++j){
+                average += contours[i][j];
+            }
+            average *= 1.0/contours[i].size();
+            lines.push_back(average);
+        }
+
         for( size_t i = 0; i < lines.size(); i++ )
         {
             float rho = lines[i][0], theta = lines[i][1];
