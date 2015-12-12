@@ -53,10 +53,10 @@ void process(char* imsfile, char* imfield, char* imball, char* imtheo)
     readStringList(imball, balllist);
 
     vector<string> theolist;
-    readStringList(imball, balllist);
+    readStringList(imtheo, theolist);
 
     vector<string> fieldlist;
-    readStringList(imball, balllist);
+    readStringList(imfield, fieldlist);
 
     int nframes = 0;
     if( !calibList.empty() ) {
@@ -119,7 +119,7 @@ void process(char* imsfile, char* imfield, char* imball, char* imtheo)
         imshow( "Result1", imsG );
 
         vector<Vec2f> lines;
-        HoughLines(imsG, lines, 1, CV_PI/180, 250, 0, 0 );
+        HoughLines(imsG, lines, 1, CV_PI/180, 230, 0, 0 );
 
 
         /*Mat Mlines = Mat::zeros(sqrt((imsG.rows*imsG.rows)+(imsG.cols*imsG.cols)), 158, CV_8UC1);
