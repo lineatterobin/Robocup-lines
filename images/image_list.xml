@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <opencv_storage>
 <images>
-  images/log1/001-rgb.png images/log1/090-rgb.png
-  images/log1/103-rgb.png images/log1/123-rgb.png
-  images/log1/147-rgb.png images/log1/167-rgb.png
-  images/log1/186-rgb.png images/log1/247-rgb.png
-  images/log1/287-rgb.png images/log1/366-rgb.png
+  images/img-src/001-rgb.png images/img-src/090-rgb.png
+  images/img-src/103-rgb.png images/img-src/123-rgb.png
+  images/img-src/147-rgb.png images/img-src/167-rgb.png
+  images/img-src/186-rgb.png images/img-src/247-rgb.png
+  images/img-src/287-rgb.png images/img-src/366-rgb.png
 </images>
 </opencv_storage>
