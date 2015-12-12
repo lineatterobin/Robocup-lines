@@ -110,34 +110,50 @@ void process(char* imsfile, char* imfield, char* imball, char* imtheo)
         imshow( "Result1", imsG );
 
         vector<Vec2f> lines;
-        HoughLines(imsG, lines, 1, CV_PI/180, 200, 0, 0 );
+        HoughLines(imsG, lines, 1, CV_PI/180, 250, 0, 0 );
 
-        Mat Mlines = Mat::zeros(2000, 361, CV_8UC1);
+
+        /*Mat Mlines = Mat::zeros(sqrt((imsG.rows*imsG.rows)+(imsG.cols*imsG.cols)), 158, CV_8UC1);
 
         for( size_t i = 0; i < lines.size(); i++ )
         {
             float rho = lines[i][0], theta = lines[i][1];
-            Mlines.at<uchar>(1000 + rho,theta) = 255;
+            Mlines.at<uchar>(rho,theta*100) = 255;
         }
+        imshow("HOUGH", Mlines);
 
-        morphologyEx(Mlines, Mlines, CV_MOP_DILATE, getStructuringElement(MORPH_ELLIPSE, Size(15,15)));
+        morphologyEx(Mlines, Mlines, CV_MOP_DILATE, getStructuringElement(MORPH_ELLIPSE, Size(3 ,3)));
 
-        vector<vector<Vec2f> > contours;
-        findContours(Mlines, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+        imshow("HOUGH2", Mlines);
+
+        vector<vector<Point> > contours;
+        vector<Vec4i> hierarchy;
+
+        findContours(Mlines, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+        RNG rng(12345);
+        Mat drawing = Mat::zeros( Mlines.size(), CV_8UC3 );
+        for( int i = 0; i< contours.size(); i++ )
+        {
+            Scalar color = Scalar( rng.uniform(0, 255), rng.uniform(0,255), rng.uniform(0,255) );
+            drawContours( drawing, contours, i, color, 2, 8,hierarchy ,0, Point() );
+        }
+        imshow("draw", drawing);
 
         lines.clear();
-        Vec2f average(0,0);
         for(size_t i = 0; i < contours.size(); ++i){
+            Vec2f average(0,0);
             for(size_t j = 0; j < contours[i].size(); ++j){
-                average += contours[i][j];
+                average[0] += contours[i][j].x;
+                average[1] += contours[i][j].y;
             }
-            average *= 1.0/contours[i].size();
+            average[0] /= contours[i].size();
+            average[1] /= contours[i].size();
             lines.push_back(average);
-        }
+        }*/
 
         for( size_t i = 0; i < lines.size(); i++ )
         {
-            float rho = lines[i][0], theta = lines[i][1];
+            float rho = lines[i][0] , theta = lines[i][1];
             Point pt1, pt2;
             double a = cos(theta), b = sin(theta);
             double x0 = a*rho, y0 = b*rho;
