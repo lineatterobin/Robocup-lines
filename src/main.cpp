@@ -57,7 +57,6 @@ void process(char* imsfile, char* imfield, char* imball, char* imtheo)
 	for(int i = 0; i < nframes ;i++) {
 
         cout << "image "<< i << endl;
-        Mat im = imread(calibList[i], 1);
 
         //-----  If no more image, or got enough, then stop calibration and show result -------------
         if(!im.empty())
@@ -66,7 +65,7 @@ void process(char* imsfile, char* imfield, char* imball, char* imtheo)
 			double time = (double)getTickCount();
 
 			//Load images
-			Mat ims = imread(imsname);
+			Mat ims = imread(calibList[i], 1);
 			Mat imb = imread(imball, CV_LOAD_IMAGE_GRAYSCALE);
 			Mat imt = imread(imtheo, CV_LOAD_IMAGE_GRAYSCALE);
 
