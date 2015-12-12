@@ -18,7 +18,7 @@ void focus(Mat ims, Mat imf, Mat imb)
                 else
                     ims.at<uchar>(i,j) = 0;
             }
-            if(imb.at<uchar>(i,j) == 255){
+            if(imb.at<uchar>(i,j) > 0){
                 if(ims.type() == CV_8UC3)
                     ims.at<Vec3b>(i,j) = V;
                 else
@@ -28,7 +28,7 @@ void focus(Mat ims, Mat imf, Mat imb)
     }
 }
 
-bool isWhite(Mat img)
+/*bool isWhite(Mat img)
 {
     for (int i = 0; i < img.rows ; i++) {
         for (int j = 0; j < img.cols ; j++) {
@@ -37,7 +37,7 @@ bool isWhite(Mat img)
         }
     }
     return true;
-}
+}*/
 
 void process(char* imsname, char* imfield, char* imball, char* imtheo)
 {
@@ -73,7 +73,7 @@ void process(char* imsname, char* imfield, char* imball, char* imtheo)
     }
 
 
-    //////////////////////////////////////////////////////////////////////////////////////
+    /*//////////////////////////////////////////////////////////////////////////////////////
 
     equalizeHist(hsv[0], hsv[0]);
     // Extract yellow-ish colors
@@ -83,44 +83,73 @@ void process(char* imsname, char* imfield, char* imball, char* imtheo)
 
     threshold(hsv[2], hsv[2], 225, 255, THRESH_BINARY);
 
-    imshow( "1", hsv[2]);
-    //////////////////////////////////////////////////////////////////////////////////////
-    bilateralFilter(imsG.clone(), imsG, -1, 20, 10);
+    //imshow( "1", hsv[2]);
+    //////////////////////////////////////////////////////////////////////////////////////*/
 
-    morphologyEx(imsG,imsG,CV_MOP_DILATE, getStructuringElement(MORPH_ELLIPSE, Size(8,8)));
+
+    //bilateralFilter(imsG.clone(), imsG, -1, 20, 10);
+    GaussianBlur(imsG,imsG,Size(9,9), 2);
+    medianBlur(imsG,imsG,5);
+
+    //morphologyEx(imsG,imsG,CV_MOP_DILATE, getStructuringElement(MORPH_ELLIPSE, Size(8,8)));
 
     adaptiveThreshold(imsG, imsG, 255, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 3, 0);
 
-    bilateralFilter(imsG.clone(), imsG, -1, 80, 10);
+    //bilateralFilter(imsG.clone(), imsG, -1, 80, 10);
 
-    threshold(imsG,imsG,125,255,CV_THRESH_BINARY);
+    //threshold(imsG,imsG,125,255,CV_THRESH_BINARY);
 
     imshow( "2", imsG );
 
-    bitwise_or(hsv[2], imsG, imsG);
+    //bitwise_or(hsv[2], imsG, imsG);
     focus(imsG, imf, imb);
-    if(isWhite(imf))
-        morphologyEx(imsG,imsG,CV_MOP_OPEN, getStructuringElement(MORPH_RECT, Size(3,3)));
+    imshow("ball", imb);
+    imshow( "Result1.0", imsG );
+    morphologyEx(imsG,imsG,CV_MOP_CLOSE, getStructuringElement(MORPH_RECT, Size(3,3)));
+    imshow( "Result1.05", imsG );
+    morphologyEx(imsG,imsG,CV_MOP_OPEN, getStructuringElement(MORPH_RECT, Size(3,3)));
     imshow( "Result1", imsG );
 
-    for (int i = 0; i < imsG.rows ; i++) {
+    vector<Vec2f> lines;
+    HoughLines(imsG, lines, 1, CV_PI/180, 200, 0, 0 );
+
+    for( size_t i = 0; i < lines.size(); i++ )
+    {
+        float rho = lines[i][0], theta = lines[i][1];
+        Point pt1, pt2;
+        double a = cos(theta), b = sin(theta);
+        double x0 = a*rho, y0 = b*rho;
+        pt1.x = cvRound(x0 + 1000*(-b));
+        pt1.y = cvRound(y0 + 1000*(a));
+        pt2.x = cvRound(x0 - 1000*(-b));
+        pt2.y = cvRound(y0 - 1000*(a));
+        line( ims, pt1, pt2, Scalar(0,0,255), 3, CV_AA);
+    }
+
+    /*for (int i = 0; i < imsG.rows ; i++) {
         for (int j = 0; j < imsG.cols ; j++) {
             if(imsG.at<uchar>(i,j) == 255) {
                 ims.at<Vec3b>(i,j)[0] = 0;
                 ims.at<Vec3b>(i,j)[1] = 0;
                 ims.at<Vec3b>(i,j)[2] = 255;
             }
+            /*if(imt.at<uchar>(i,j) == 0) {
+                ims.at<Vec3b>(i,j)[0] = 0;
+                ims.at<Vec3b>(i,j)[1] = 0;
+                ims.at<Vec3b>(i,j)[2] = 0;
+            }
         }
-    }
+    }*/
 
     imshow( "Result", ims );
+    //imshow( "imt", imt);
     int false_positive = 0;
     int false_negative = 0;
     for (int i = 0; i < imsG.rows ; i ++) {
         for (int j = 0; j < imsG.cols ; j++) {
-            if(imsG.at<uchar>(i,j) == 255 && imt.at<uchar>(i,j) != 255)
+            if(imsG.at<uchar>(i,j) == 255 && imt.at<uchar>(i,j) != 0)
                 false_positive++;
-            else if (imsG.at<uchar>(i,j) != 255 && imt.at<uchar>(i,j) == 255)
+            else if (imsG.at<uchar>(i,j) != 255 && imt.at<uchar>(i,j) == 0)
                 false_negative++;
         }
     }
@@ -128,6 +157,7 @@ void process(char* imsname, char* imfield, char* imball, char* imtheo)
     // Process and display execution time
     time = ((double)getTickCount() - time) / getTickFrequency();
     cout << "Execution time:" << time << endl;
+    cout << "false_po " << false_positive << " false_neg " << false_negative << endl;
 
     waitKey(0);
 
