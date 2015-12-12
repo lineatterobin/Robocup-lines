@@ -39,105 +39,142 @@ bool isWhite(Mat img)
     return true;
 }
 
-void process(char* imsname, char* imfield, char* imball, char* imtheo)
+void process(char* imsfile, char* imfield, char* imball, char* imtheo)
 {
-    //Time to process
-    double time = (double)getTickCount();
+    vector<string> calibList;
+    readStringList(imsfile, calibList);
 
-    //Load images
-    Mat ims = imread(imsname);
-    Mat imb = imread(imball, CV_LOAD_IMAGE_GRAYSCALE);
-    Mat imt = imread(imtheo, CV_LOAD_IMAGE_GRAYSCALE);
-
-    Mat imf = imread(imfield, CV_LOAD_IMAGE_GRAYSCALE);
-
-    Mat new_ims = ims.clone();
-
-    Mat imsG;
-
-    // Brightness & contrast
-    for( int y = 0; y < ims.rows; y++ )
-        for( int x = 0; x < ims.cols; x++ )
-            for( int c = 0; c < 3; c++ )
-                new_ims.at<Vec3b>(y,x)[c] = saturate_cast<uchar>( 2 * ims.at<Vec3b>(y,x)[c] );
-
-
-    //Convert main image to a gray scale
-    cvtColor(ims, imsG, CV_BGR2GRAY);
-
-    Mat hsv[3];
-    {
-        Mat hsv2;
-        cvtColor(new_ims, hsv2, CV_BGR2HSV);
-        split(hsv2, hsv);
+    int nframes = 0;
+    if( !calibList.empty() ) {
+        nframes = (int)calibList.size();
+        cout<< nframes <<  " images" << endl;
     }
-
-
-    //////////////////////////////////////////////////////////////////////////////////////
-
-    equalizeHist(hsv[0], hsv[0]);
-    // Extract yellow-ish colors
-    for( int y = 0; y < hsv[0].rows; y++ )
-        for( int x = 0; x < hsv[0].cols; x++ )
-            hsv[0].at<uchar>(y,x) =  (abs((int)hsv[0].at<uchar>(y,x) - 66) < 20) * 255;
-
-    threshold(hsv[2], hsv[2], 225, 255, THRESH_BINARY);
-
-    imshow( "1", hsv[2]);
-    //////////////////////////////////////////////////////////////////////////////////////
-    bilateralFilter(imsG.clone(), imsG, -1, 20, 10);
-
-    morphologyEx(imsG,imsG,CV_MOP_DILATE, getStructuringElement(MORPH_ELLIPSE, Size(8,8)));
-
-    adaptiveThreshold(imsG, imsG, 255, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 3, 0);
-
-    bilateralFilter(imsG.clone(), imsG, -1, 80, 10);
-
-    threshold(imsG,imsG,125,255,CV_THRESH_BINARY);
-
-    imshow( "2", imsG );
-
-    bitwise_or(hsv[2], imsG, imsG);
-    focus(imsG, imf, imb);
-    if(isWhite(imf))
-        morphologyEx(imsG,imsG,CV_MOP_OPEN, getStructuringElement(MORPH_RECT, Size(3,3)));
-    imshow( "Result1", imsG );
-
-    for (int i = 0; i < imsG.rows ; i++) {
-        for (int j = 0; j < imsG.cols ; j++) {
-            if(imsG.at<uchar>(i,j) == 255) {
-                ims.at<Vec3b>(i,j)[0] = 0;
-                ims.at<Vec3b>(i,j)[1] = 0;
-                ims.at<Vec3b>(i,j)[2] = 255;
-            }
-        }
+    else {
+        cout <<  "No images" << endl;
+        return 1;
     }
+	
+	for(int i = 0; i < nframes ;i++) {
 
-    imshow( "Result", ims );
-    int false_positive = 0;
-    int false_negative = 0;
-    for (int i = 0; i < imsG.rows ; i ++) {
-        for (int j = 0; j < imsG.cols ; j++) {
-            if(imsG.at<uchar>(i,j) == 255 && imt.at<uchar>(i,j) != 255)
-                false_positive++;
-            else if (imsG.at<uchar>(i,j) != 255 && imt.at<uchar>(i,j) == 255)
-                false_negative++;
-        }
-    }
+        cout << "image "<< i << endl;
+        Mat im = imread(calibList[i], 1);
 
-    // Process and display execution time
-    time = ((double)getTickCount() - time) / getTickFrequency();
-    cout << "Execution time:" << time << endl;
+        //-----  If no more image, or got enough, then stop calibration and show result -------------
+        if(!im.empty())
+        {
+			//Time to process
+			double time = (double)getTickCount();
 
-    waitKey(0);
+			//Load images
+			Mat ims = imread(imsname);
+			Mat imb = imread(imball, CV_LOAD_IMAGE_GRAYSCALE);
+			Mat imt = imread(imtheo, CV_LOAD_IMAGE_GRAYSCALE);
 
+			Mat imf = imread(imfield, CV_LOAD_IMAGE_GRAYSCALE);
+
+			Mat new_ims = ims.clone();
+
+			Mat imsG;
+
+			// Brightness & contrast
+			for( int y = 0; y < ims.rows; y++ )
+				for( int x = 0; x < ims.cols; x++ )
+					for( int c = 0; c < 3; c++ )
+						new_ims.at<Vec3b>(y,x)[c] = saturate_cast<uchar>( 2 * ims.at<Vec3b>(y,x)[c] );
+
+
+			//Convert main image to a gray scale
+			cvtColor(ims, imsG, CV_BGR2GRAY);
+
+			Mat hsv[3];
+			{
+				Mat hsv2;
+				cvtColor(new_ims, hsv2, CV_BGR2HSV);
+				split(hsv2, hsv);
+			}
+
+
+			//////////////////////////////////////////////////////////////////////////////////////
+
+			equalizeHist(hsv[0], hsv[0]);
+			// Extract yellow-ish colors
+			for( int y = 0; y < hsv[0].rows; y++ )
+				for( int x = 0; x < hsv[0].cols; x++ )
+					hsv[0].at<uchar>(y,x) =  (abs((int)hsv[0].at<uchar>(y,x) - 66) < 20) * 255;
+
+			threshold(hsv[2], hsv[2], 225, 255, THRESH_BINARY);
+
+			imshow( "1", hsv[2]);
+			//////////////////////////////////////////////////////////////////////////////////////
+			bilateralFilter(imsG.clone(), imsG, -1, 20, 10);
+
+			morphologyEx(imsG,imsG,CV_MOP_DILATE, getStructuringElement(MORPH_ELLIPSE, Size(8,8)));
+
+			adaptiveThreshold(imsG, imsG, 255, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 3, 0);
+
+			bilateralFilter(imsG.clone(), imsG, -1, 80, 10);
+
+			threshold(imsG,imsG,125,255,CV_THRESH_BINARY);
+
+			imshow( "2", imsG );
+
+			bitwise_or(hsv[2], imsG, imsG);
+			focus(imsG, imf, imb);
+			if(isWhite(imf))
+				morphologyEx(imsG,imsG,CV_MOP_OPEN, getStructuringElement(MORPH_RECT, Size(3,3)));
+			imshow( "Result1", imsG );
+
+			for (int i = 0; i < imsG.rows ; i++) {
+				for (int j = 0; j < imsG.cols ; j++) {
+					if(imsG.at<uchar>(i,j) == 255) {
+						ims.at<Vec3b>(i,j)[0] = 0;
+						ims.at<Vec3b>(i,j)[1] = 0;
+						ims.at<Vec3b>(i,j)[2] = 255;
+					}
+				}
+			}
+
+			imshow( "Result", ims );
+			int false_positive = 0;
+			int false_negative = 0;
+			for (int i = 0; i < imsG.rows ; i ++) {
+				for (int j = 0; j < imsG.cols ; j++) {
+					if(imsG.at<uchar>(i,j) == 255 && imt.at<uchar>(i,j) != 255)
+						false_positive++;
+					else if (imsG.at<uchar>(i,j) != 255 && imt.at<uchar>(i,j) == 255)
+						false_negative++;
+				}
+			}
+
+			// Process and display execution time
+			time = ((double)getTickCount() - time) / getTickFrequency();
+			cout << "Execution time:" << time << endl;
+
+			waitKey(0);
+		}
+	}
+}
+
+static bool readStringList( const string& filename, vector<string>& l )
+{
+    l.resize(0);
+    FileStorage fs(filename, FileStorage::READ);
+    if( !fs.isOpened() )
+        return false;
+    FileNode n = fs.getFirstTopLevelNode();
+    if( n.type() != FileNode::SEQ )
+        return false;
+    FileNodeIterator it = n.begin(), it_end = n.end();
+    for( ; it != it_end; ++it )
+        l.push_back((string)*it);
+    return true;
 }
 
 #define param 4
 int main(int argc, char** argv)
 {
     if(argc != param + 1)
-        cout<<"Usage: imsname imfield imball imtheo"<<endl;
+        cout<<"Usage: imsfile imfield imball imtheo"<<endl;
     else
     {
         process(argv[1], argv[2], argv[3], argv[4]);
