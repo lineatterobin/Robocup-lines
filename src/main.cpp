@@ -49,6 +49,15 @@ void process(char* imsfile, char* imfield, char* imball, char* imtheo)
     vector<string> calibList;
     readStringList(imsfile, calibList);
 
+    vector<string> balllist;
+    readStringList(imball, balllist);
+
+    vector<string> theolist;
+    readStringList(imball, balllist);
+
+    vector<string> fieldlist;
+    readStringList(imball, balllist);
+
     int nframes = 0;
     if( !calibList.empty() ) {
         nframes = (int)calibList.size();
@@ -68,10 +77,10 @@ void process(char* imsfile, char* imfield, char* imball, char* imtheo)
 
         //Load images
         Mat ims = imread(calibList[i], 1);
-        Mat imb = imread(imball, CV_LOAD_IMAGE_GRAYSCALE);
-        Mat imt = imread(imtheo, CV_LOAD_IMAGE_GRAYSCALE);
+        Mat imb = imread(balllist[i], CV_LOAD_IMAGE_GRAYSCALE);
+        Mat imt = imread(theolist[i], CV_LOAD_IMAGE_GRAYSCALE);
 
-        Mat imf = imread(imfield, CV_LOAD_IMAGE_GRAYSCALE);
+        Mat imf = imread(fieldlist[i], CV_LOAD_IMAGE_GRAYSCALE);
 
         Mat new_ims = ims.clone();
 
