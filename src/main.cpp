@@ -44,7 +44,7 @@ void focus(Mat ims, Mat imf, Mat imb)
 }
 
 
-void process(char* imsfile, char* imfield, char* imball, char* imtheo)
+void process(char* imsfile, char* imfield, char* imball, char* imtheo, char*imres)
 {
     vector<string> calibList;
     readStringList(imsfile, calibList);
@@ -57,6 +57,9 @@ void process(char* imsfile, char* imfield, char* imball, char* imtheo)
 
     vector<string> fieldlist;
     readStringList(imfield, fieldlist);
+
+    vector<string> reslist;
+    readStringList(imres, reslist);
 
     int nframes = 0;
     double meanTime = 0;
@@ -108,6 +111,7 @@ void process(char* imsfile, char* imfield, char* imball, char* imtheo)
 
         GaussianBlur(imsG,imsG,Size(9,9), 2);
         medianBlur(imsG,imsG,5);
+        imshow( "Gaussian", imsG );
 
         adaptiveThreshold(imsG, imsG, 255, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY, 3, 0);
 
@@ -198,6 +202,7 @@ void process(char* imsfile, char* imfield, char* imball, char* imtheo)
         meanFalsePos += false_positive;
         meanFalseNeg += false_negative;
 
+        imwrite(reslist[i], ims);
         waitKey(0);
 
     }
@@ -210,14 +215,14 @@ void process(char* imsfile, char* imfield, char* imball, char* imtheo)
 }
 
 
-#define param 4
+#define param 5
 int main(int argc, char** argv)
 {
     if(argc != param + 1)
         cout<<"Usage: imsfile imfield imball imtheo"<<endl;
     else
     {
-        process(argv[1], argv[2], argv[3], argv[4]);
+        process(argv[1], argv[2], argv[3], argv[4], argv[5]);
     }
     return 0;
 }
