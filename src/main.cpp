@@ -206,7 +206,7 @@ void process(char* imsfile, char* imfield, char* imball, char* imtheo, char*imre
 int main(int argc, char** argv)
 {
     if(argc != param + 1)
-        cout<<"Usage: imsfile imfield imball imtheo"<<endl;
+        cout<<"Usage: imsfile imfield imball imtheo resultfile"<<endl;
     else
     {
         process(argv[1], argv[2], argv[3], argv[4], argv[5]);
