@@ -62,6 +62,9 @@ void process(char* imsfile, char* imfield, char* imball, char* imtheo, char*imre
     readStringList(imres, reslist);
 
     int nframes = 0;
+    double meanTime = 0;
+    int meanFalsePos = 0;
+    int meanFalseNeg = 0;
     if( !calibList.empty() ) {
         nframes = (int)calibList.size();
         cout<< nframes <<  " images" << endl;
@@ -195,10 +198,20 @@ void process(char* imsfile, char* imfield, char* imball, char* imtheo, char*imre
         cout << "Execution time:" << time << endl;
         cout << "false_po " << false_positive << " false_neg " << false_negative << endl;
 
+        meanTime += time;
+        meanFalsePos += false_positive;
+        meanFalseNeg += false_negative;
+
         imwrite(reslist[i], ims);
         waitKey(0);
 
     }
+    // Process and display mean execution time, number of false negative and number of false positive
+    meanTime /= nframes;
+    meanFalsePos /= nframes;
+    meanFalseNeg /= nframes;
+    cout << "Mean execution time:" << meanTime << endl;
+    cout << "Mean nbr of false positive " << meanFalsePos << "Mean nbr of false negative " << meanFalseNeg << endl;
 }
 
 
